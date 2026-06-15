@@ -261,7 +261,11 @@ const CONSENT_BANNER = `<div class="consent" data-consent hidden role="dialog" a
   + `<div class="consent-actions"><button type="button" class="consent-btn consent-decline" data-consent-decline>Decline</button>`
   + `<button type="button" class="consent-btn consent-accept" data-consent-accept>Accept</button></div></div>`;
 const NOSCRIPT = `<noscript><div class="noscript-banner">This site works best with JavaScript on for search, save, and near me.</div></noscript>`;
-const HEAD_PWA = `<link rel="manifest" href="/manifest.json"><meta name="theme-color" content="#0e3b30"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Pawns">`;
+const HEAD_PWA = `<link rel="manifest" href="/manifest.json"><meta name="theme-color" content="#0e3b30">`
+  + `<link rel="icon" href="/favicon.ico" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png"><link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">`
+  + `<link rel="apple-touch-icon" sizes="180x180" href="/apple-icon-180x180.png">`
+  + `<meta name="msapplication-config" content="/browserconfig.xml">`
+  + `<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Pawns">`;
 // Playfair Display — the Vault display serif: a high-contrast luxury face with
 // genuinely heavy weights (up to 900) so headings read bold, not thin. Preconnect
 // + a non-blocking print-onload swap so first paint never waits on the font.

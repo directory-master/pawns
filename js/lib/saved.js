@@ -1,7 +1,7 @@
 // saved.js — localStorage-backed Saved + Visited lists. No backend.
 // IDs are listing ids (stable URL keys). Other tabs are notified via events.
 
-import { track } from './analytics.js?v=0.9.16';
+import { track } from './analytics.js?v=0.9.17';
 
 const SAVED_KEY = 'gap.saved';
 const VISITED_KEY = 'gap.visited';

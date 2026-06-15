@@ -4,14 +4,14 @@
 // card into the detail sheet. The pages work without it; this just makes them
 // interactive. Operates on existing DOM — no re-rendering of static content.
 
-import { h } from './lib/dom.js?v=0.9.16';
-import { icon } from './lib/icons.js?v=0.9.16';
-import { savedIds, savedCount, isSaved, toggleSave } from './lib/saved.js?v=0.9.16';
-import { byId, distanceMi, nearest } from './lib/store.js?v=0.9.16';
-import { openClaim, openDetail, renderCard } from './components/card.js?v=0.9.16';
-import { puffFrom } from './lib/confetti.js?v=0.9.16';
-import { CENTROIDS } from './data/city-centroids.js?v=0.9.16';
-import { track } from './lib/analytics.js?v=0.9.16';
+import { h } from './lib/dom.js?v=0.9.17';
+import { icon } from './lib/icons.js?v=0.9.17';
+import { savedIds, savedCount, isSaved, toggleSave } from './lib/saved.js?v=0.9.17';
+import { byId, distanceMi, nearest } from './lib/store.js?v=0.9.17';
+import { openClaim, openDetail, renderCard } from './components/card.js?v=0.9.17';
+import { puffFrom } from './lib/confetti.js?v=0.9.17';
+import { CENTROIDS } from './data/city-centroids.js?v=0.9.17';
+import { track } from './lib/analytics.js?v=0.9.17';
 
 const CLAIM_TO = 'artivicolab@gmail.com';
 const haptic = (s) => { try { navigator.vibrate?.(s ? [12, 28, 22] : 18); } catch { /* */ } };
@@ -153,6 +153,11 @@ document.addEventListener('submit', (e) => {
   el.querySelector('[data-consent-accept]')?.addEventListener('click', () => decide('granted'));
   el.querySelector('[data-consent-decline]')?.addEventListener('click', () => decide('denied'));
 })();
+
+// ── PWA: register the service worker (offline cache + installability) ─────────
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => { navigator.serviceWorker.register('/sw.js').catch(() => { /* */ }); });
+}
 
 // ── visitor location: one shared store + pinned-city resolution ──────────────
 const LOC_KEY = 'gap:location';

@@ -9,12 +9,12 @@
 //   Standard  → pinned above free, "Claimed" eligibility.
 //   Premium   → pinned to top, a "Make an offer" CTA.
 
-import { h } from '../lib/dom.js?v=0.9.16';
-import { icon } from '../lib/icons.js?v=0.9.16';
-import { isSaved, toggleSave, markVisited } from '../lib/saved.js?v=0.9.16';
-import { puffFrom } from '../lib/confetti.js?v=0.9.16';
-import { initials, telHref, mapsHref, fmtRating, fmtReviews, parseHours, prettyHost } from '../lib/format.js?v=0.9.16';
-import { track } from '../lib/analytics.js?v=0.9.16';
+import { h } from '../lib/dom.js?v=0.9.17';
+import { icon } from '../lib/icons.js?v=0.9.17';
+import { isSaved, toggleSave, markVisited } from '../lib/saved.js?v=0.9.17';
+import { puffFrom } from '../lib/confetti.js?v=0.9.17';
+import { initials, telHref, mapsHref, fmtRating, fmtReviews, parseHours, prettyHost } from '../lib/format.js?v=0.9.17';
+import { track } from '../lib/analytics.js?v=0.9.17';
 
 const CLAIM_TO = 'artivicolab@gmail.com'; // never rendered as visible text
 const KIND = { shop: 'Pawn & Loan', buyer: 'Buyer' };
