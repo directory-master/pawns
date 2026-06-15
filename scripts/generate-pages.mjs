@@ -242,7 +242,12 @@ function segmentedHTML(list) {
     + `</div></div>`;
 }
 
-const GTAG = '';
+// Google Analytics 4 — loaded first in <head> on every page. GA4 auto-collects
+// page_view (incl. SPA-style history changes); custom UI actions are sent from
+// js/static.js via window.gtag. Keep the ID in one place.
+const GA_ID = 'G-0BKYFKP8K5';
+const GTAG = `<script async src="https://www.googletagmanager.com/gtag/js?id=${GA_ID}"></script>`
+  + `<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA_ID}');</script>`;
 const NOSCRIPT = `<noscript><div class="noscript-banner">This site works best with JavaScript on for search, save, and near me.</div></noscript>`;
 const HEAD_PWA = `<link rel="manifest" href="/manifest.json"><meta name="theme-color" content="#0e3b30"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Pawns">`;
 // Playfair Display — the Vault display serif: a high-contrast luxury face with
@@ -755,7 +760,7 @@ const readPkg = () => readFileSync(join(ROOT, 'package.json'), 'utf8');
 
 function write404() {
   const body = `<main class="static-wrap"><h1 class="static-h1">Page not found</h1><p class="static-sub">That page does not exist. Browse the directory instead.</p><p style="margin-top:18px"><a class="btn-pill" href="/directory/">Browse all Georgia pawn shops</a></p></main>`;
-  writeFileSync(join(ROOT, '404.html'), `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Page not found | ${esc(SITE)}</title><meta name="robots" content="noindex">${HEAD_PWA}<link rel="stylesheet" href="/css/style.css?v=${V}"></head><body class="static">${iconSprite()}${NOSCRIPT}${headerHTML()}${body}${footerHTML()}</body></html>`);
+  writeFileSync(join(ROOT, '404.html'), `<!doctype html><html lang="en"><head><meta charset="utf-8">${GTAG}<meta name="viewport" content="width=device-width, initial-scale=1"><title>Page not found | ${esc(SITE)}</title><meta name="robots" content="noindex">${HEAD_PWA}<link rel="stylesheet" href="/css/style.css?v=${V}"></head><body class="static">${iconSprite()}${NOSCRIPT}${headerHTML()}${body}${footerHTML()}${bottomTabsHTML()}<script type="module" src="/js/static.js?v=${V}"></script></body></html>`);
 }
 
 // build everything

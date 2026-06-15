@@ -1,6 +1,8 @@
 // saved.js — localStorage-backed Saved + Visited lists. No backend.
 // IDs are listing ids (stable URL keys). Other tabs are notified via events.
 
+import { track } from './analytics.js?v=0.9.15';
+
 const SAVED_KEY = 'gap.saved';
 const VISITED_KEY = 'gap.visited';
 
@@ -23,8 +25,8 @@ export function visitedCount() { return read(VISITED_KEY).length; }
 export function toggleSave(id) {
   const list = read(SAVED_KEY);
   const i = list.indexOf(id);
-  if (i >= 0) { list.splice(i, 1); write(SAVED_KEY, list); return false; }
-  list.unshift(id); write(SAVED_KEY, list); return true;
+  if (i >= 0) { list.splice(i, 1); write(SAVED_KEY, list); track('unsave_listing', { item_id: id }); return false; }
+  list.unshift(id); write(SAVED_KEY, list); track('save_listing', { item_id: id }); return true;
 }
 
 // Record that the user tapped through to a listing (call/site/directions).

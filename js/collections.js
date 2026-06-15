@@ -1,11 +1,11 @@
 // collections.js — renders /search/, /saved/, /visited/ from localStorage and the
 // URL query, reusing the real card component so results match the static pages.
 
-import { mount, h } from './lib/dom.js?v=0.9.12';
-import { renderCard } from './components/card.js?v=0.9.12';
-import { PAWNS, byIds, top } from './lib/store.js?v=0.9.12';
-import { savedIds, visitedIds } from './lib/saved.js?v=0.9.12';
-import { CATEGORIES } from './data/categories.js?v=0.9.12';
+import { mount, h } from './lib/dom.js?v=0.9.15';
+import { renderCard } from './components/card.js?v=0.9.15';
+import { PAWNS, byIds, top } from './lib/store.js?v=0.9.15';
+import { savedIds, visitedIds } from './lib/saved.js?v=0.9.15';
+import { CATEGORIES } from './data/categories.js?v=0.9.15';
 
 const SLUG_BY_TYPE = Object.fromEntries(CATEGORIES.map(c => [c.slug, c.type]));
 

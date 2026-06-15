@@ -4,9 +4,9 @@
 //
 // Pure data, no DOM.
 
-import { IMPORTED } from '../data/pawns-imported.js?v=0.9.12';
-import { CITY_COUNTY } from '../data/ga-counties.js?v=0.9.12';
-import { CATEGORIES, TYPE_BY_SLUG, SLUG_BY_TYPE } from '../data/categories.js?v=0.9.12';
+import { IMPORTED } from '../data/pawns-imported.js?v=0.9.15';
+import { CITY_COUNTY } from '../data/ga-counties.js?v=0.9.15';
+import { CATEGORIES, TYPE_BY_SLUG, SLUG_BY_TYPE } from '../data/categories.js?v=0.9.15';
 
 export const kebab = (s) => (s || '').toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 const titleCase = (slug) => (slug || '').split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');

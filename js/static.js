@@ -4,13 +4,14 @@
 // card into the detail sheet. The pages work without it; this just makes them
 // interactive. Operates on existing DOM — no re-rendering of static content.
 
-import { h } from './lib/dom.js?v=0.9.12';
-import { icon } from './lib/icons.js?v=0.9.12';
-import { savedIds, savedCount, isSaved, toggleSave } from './lib/saved.js?v=0.9.12';
-import { byId, distanceMi, nearest } from './lib/store.js?v=0.9.12';
-import { openClaim, openDetail, renderCard } from './components/card.js?v=0.9.12';
-import { puffFrom } from './lib/confetti.js?v=0.9.12';
-import { CENTROIDS } from './data/city-centroids.js?v=0.9.12';
+import { h } from './lib/dom.js?v=0.9.15';
+import { icon } from './lib/icons.js?v=0.9.15';
+import { savedIds, savedCount, isSaved, toggleSave } from './lib/saved.js?v=0.9.15';
+import { byId, distanceMi, nearest } from './lib/store.js?v=0.9.15';
+import { openClaim, openDetail, renderCard } from './components/card.js?v=0.9.15';
+import { puffFrom } from './lib/confetti.js?v=0.9.15';
+import { CENTROIDS } from './data/city-centroids.js?v=0.9.15';
+import { track } from './lib/analytics.js?v=0.9.15';
 
 const CLAIM_TO = 'artivicolab@gmail.com';
 const haptic = (s) => { try { navigator.vibrate?.(s ? [12, 28, 22] : 18); } catch { /* */ } };
@@ -52,6 +53,7 @@ window.addEventListener('storage', syncSaves);
 // ── Slot (paid placement) mailto ─────────────────────────────────────────────
 function openSlot(tier) {
   const s = tier === 'premium' ? { t: 'Premium', p: '$20' } : { t: 'Standard', p: '$10' };
+  track('select_promotion', { tier, price: s.p });
   window.location.href = `mailto:${CLAIM_TO}?subject=${encodeURIComponent(`${s.t} listing (${s.p}/mo)`)}&body=${encodeURIComponent(`I'd like the ${s.t.toLowerCase()} placement (${s.p}/mo).\n\nShop name:\nCity:\nWebsite:\nBest phone:`)}`;
 }
 
@@ -110,15 +112,37 @@ document.addEventListener('click', (e) => {
 // close any open sheet/modal on Escape
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') document.querySelector('.sheet-backdrop, .modal-backdrop')?.remove(); });
 
+// ── GA4: outbound / contact actions (any page, any card type — links bubble here)
+document.addEventListener('click', (e) => {
+  const a = e.target.closest('a[href]');
+  if (!a) return;
+  const href = a.getAttribute('href') || '';
+  const card = a.closest('[data-listing-id], [data-details-id]');
+  const id = card ? (card.dataset.listingId || card.dataset.detailsId) : undefined;
+  if (href.startsWith('tel:')) track('call_shop', { item_id: id });
+  else if (/\/maps\/|google\.[^/]+\/maps|maps\.app\.goo|maps\.google/.test(href)) track('get_directions', { item_id: id });
+  else if (href.startsWith('mailto:')) track('contact_shop', { method: /offer/i.test(href) ? 'offer' : 'email', item_id: id });
+  else if (/^https?:\/\//.test(href) && !href.includes(location.host)) track('visit_website', { item_id: id, url: href });
+}, { capture: true });
+
+// ── GA4: search submissions (header + hero forms carry a name="q" input)
+document.addEventListener('submit', (e) => {
+  const form = e.target.closest('form');
+  const q = form && form.querySelector('input[name="q"]');
+  if (q && q.value.trim()) track('search', { search_term: q.value.trim().slice(0, 100) });
+}, { capture: true });
+
 // ── visitor location: one shared store + pinned-city resolution ──────────────
 const LOC_KEY = 'gap:location';
 function getLoc() { try { const s = JSON.parse(localStorage.getItem(LOC_KEY) || 'null'); return (s && isFinite(s.lat)) ? s : null; } catch { return null; } }
 function setLoc(lat, lng) {
   try { localStorage.setItem(LOC_KEY, JSON.stringify({ lat, lng, ts: Date.now() })); } catch { /* */ }
+  const slug = nearestCity(lat, lng);
+  track('pin_location', { city: slug && CENTROIDS[slug] ? CENTROIDS[slug].name : slug });
   window.dispatchEvent(new CustomEvent('gap:userloc', { detail: { lat, lng } }));
 }
 // Clearing reloads so every located surface (rails, distances, label) resets cleanly.
-function clearLoc() { try { localStorage.removeItem(LOC_KEY); } catch { /* */ } window.location.reload(); }
+function clearLoc() { track('clear_location'); try { localStorage.removeItem(LOC_KEY); } catch { /* */ } window.location.reload(); }
 
 // ── Near me → nearest covered city ───────────────────────────────────────────
 function nearestCity(lat, lng) {
@@ -143,8 +167,9 @@ document.querySelectorAll('[data-near-me]').forEach((btn) => {
     if (e.target.closest('[data-near-clear]')) { e.stopPropagation(); clearLoc(); return; }
     // already pinned → take them straight back to their city (no re-geolocate)
     const pin = pinnedCity();
-    if (pin) { window.location.href = `/${pin.slug}/`; return; }
+    if (pin) { track('near_me_return', { city: pin.name }); window.location.href = `/${pin.slug}/`; return; }
     if (!navigator.geolocation) { window.location.href = '/directory/'; return; }
+    track('locate_me');
     btn.classList.add('locating');
     navigator.geolocation.getCurrentPosition(
       (pos) => {

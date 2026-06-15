@@ -9,11 +9,12 @@
 //   Standard  → pinned above free, "Claimed" eligibility.
 //   Premium   → pinned to top, a "Make an offer" CTA.
 
-import { h } from '../lib/dom.js?v=0.9.12';
-import { icon } from '../lib/icons.js?v=0.9.12';
-import { isSaved, toggleSave, markVisited } from '../lib/saved.js?v=0.9.12';
-import { puffFrom } from '../lib/confetti.js?v=0.9.12';
-import { initials, telHref, mapsHref, fmtRating, fmtReviews, parseHours, prettyHost } from '../lib/format.js?v=0.9.12';
+import { h } from '../lib/dom.js?v=0.9.15';
+import { icon } from '../lib/icons.js?v=0.9.15';
+import { isSaved, toggleSave, markVisited } from '../lib/saved.js?v=0.9.15';
+import { puffFrom } from '../lib/confetti.js?v=0.9.15';
+import { initials, telHref, mapsHref, fmtRating, fmtReviews, parseHours, prettyHost } from '../lib/format.js?v=0.9.15';
+import { track } from '../lib/analytics.js?v=0.9.15';
 
 const CLAIM_TO = 'artivicolab@gmail.com'; // never rendered as visible text
 const KIND = { shop: 'Pawn & Loan', buyer: 'Buyer' };
@@ -126,12 +127,14 @@ function offerMailto(l) {
 }
 function openSlot(tier) {
   const s = SLOT[tier];
+  track('select_promotion', { tier, price: s.price });
   window.location.href = `mailto:${CLAIM_TO}?subject=${encodeURIComponent(`${s.tag} listing (${s.price}/mo)`)}&body=${encodeURIComponent(`I'd like the ${s.tag.toLowerCase()} placement (${s.price}/mo).\n\nShop name:\nCity:\nWebsite:\nBest phone:`)}`;
 }
 
 // Lightweight claim modal → mailto (address never shown as text).
 export function openClaim(l) {
   document.querySelector('.modal-backdrop')?.remove();
+  track('claim_listing', { item_id: l.id, item_name: l.name });
   const close = () => backdrop.remove();
   const mailto = `mailto:${CLAIM_TO}?subject=${encodeURIComponent('Claim listing: ' + l.name)}&body=${encodeURIComponent(`I want to claim and upgrade:\n\n${l.name}\n${l.address || l.cityName + ', GA'}\n\nName:\nRole:\nBest phone:`)}`;
   const backdrop = h('div', { class: 'modal-backdrop', onclick: (e) => { if (e.target === backdrop) close(); } },
@@ -160,6 +163,7 @@ function milesAway(aLat, aLng, bLat, bLng) {
 export function openDetail(l) {
   document.querySelector('.sheet-backdrop')?.remove();
   try { markVisited(l.id); } catch { /* */ }
+  track('view_listing', { item_id: l.id, item_name: l.name, item_category: l.type, city: l.cityName });
   const close = () => backdrop.remove();
   const tel = telHref(l.phone);
   const dest = l.lat != null ? `${l.lat},${l.lng}` : encodeURIComponent(l.address || l.name);
