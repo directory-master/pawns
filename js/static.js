@@ -4,14 +4,14 @@
 // card into the detail sheet. The pages work without it; this just makes them
 // interactive. Operates on existing DOM — no re-rendering of static content.
 
-import { h } from './lib/dom.js?v=0.9.15';
-import { icon } from './lib/icons.js?v=0.9.15';
-import { savedIds, savedCount, isSaved, toggleSave } from './lib/saved.js?v=0.9.15';
-import { byId, distanceMi, nearest } from './lib/store.js?v=0.9.15';
-import { openClaim, openDetail, renderCard } from './components/card.js?v=0.9.15';
-import { puffFrom } from './lib/confetti.js?v=0.9.15';
-import { CENTROIDS } from './data/city-centroids.js?v=0.9.15';
-import { track } from './lib/analytics.js?v=0.9.15';
+import { h } from './lib/dom.js?v=0.9.16';
+import { icon } from './lib/icons.js?v=0.9.16';
+import { savedIds, savedCount, isSaved, toggleSave } from './lib/saved.js?v=0.9.16';
+import { byId, distanceMi, nearest } from './lib/store.js?v=0.9.16';
+import { openClaim, openDetail, renderCard } from './components/card.js?v=0.9.16';
+import { puffFrom } from './lib/confetti.js?v=0.9.16';
+import { CENTROIDS } from './data/city-centroids.js?v=0.9.16';
+import { track } from './lib/analytics.js?v=0.9.16';
 
 const CLAIM_TO = 'artivicolab@gmail.com';
 const haptic = (s) => { try { navigator.vibrate?.(s ? [12, 28, 22] : 18); } catch { /* */ } };
@@ -131,6 +131,28 @@ document.addEventListener('submit', (e) => {
   const q = form && form.querySelector('input[name="q"]');
   if (q && q.value.trim()) track('search', { search_term: q.value.trim().slice(0, 100) });
 }, { capture: true });
+
+// ── GDPR consent banner (Consent Mode v2) ───────────────────────────────────
+// gtag defaults analytics_storage to 'denied' in <head>; this shows the one-time
+// banner when no choice is stored, and flips consent on Accept. Decline leaves
+// analytics denied (GA4 then runs cookieless or not at all).
+(() => {
+  const el = document.querySelector('[data-consent]');
+  if (!el) return;
+  let decided = null;
+  try { decided = localStorage.getItem('gap.consent'); } catch { /* */ }
+  if (decided !== 'granted' && decided !== 'denied') el.hidden = false;
+  const decide = (value) => {
+    try { localStorage.setItem('gap.consent', value); } catch { /* */ }
+    if (value === 'granted' && typeof window.gtag === 'function') {
+      window.gtag('consent', 'update', { ad_storage: 'granted', ad_user_data: 'granted', ad_personalization: 'granted', analytics_storage: 'granted' });
+    }
+    track('consent_choice', { consent: value });
+    el.hidden = true;
+  };
+  el.querySelector('[data-consent-accept]')?.addEventListener('click', () => decide('granted'));
+  el.querySelector('[data-consent-decline]')?.addEventListener('click', () => decide('denied'));
+})();
 
 // ── visitor location: one shared store + pinned-city resolution ──────────────
 const LOC_KEY = 'gap:location';

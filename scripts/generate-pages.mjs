@@ -246,8 +246,20 @@ function segmentedHTML(list) {
 // page_view (incl. SPA-style history changes); custom UI actions are sent from
 // js/static.js via window.gtag. Keep the ID in one place.
 const GA_ID = 'G-0BKYFKP8K5';
+// Consent Mode v2: analytics + ads storage default to DENIED, so GA4 sets no
+// cookies / collects no identifiers until the visitor accepts (GDPR/EEA). The
+// stored choice is restored inline (before config) so a returning consenter
+// isn't downgraded on first paint. The banner that flips it lives in <body>.
 const GTAG = `<script async src="https://www.googletagmanager.com/gtag/js?id=${GA_ID}"></script>`
-  + `<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA_ID}');</script>`;
+  + `<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}`
+  + `gtag('consent','default',{ad_storage:'denied',ad_user_data:'denied',ad_personalization:'denied',analytics_storage:'denied',wait_for_update:500});`
+  + `try{if(localStorage.getItem('gap.consent')==='granted')gtag('consent','update',{ad_storage:'granted',ad_user_data:'granted',ad_personalization:'granted',analytics_storage:'granted'});}catch(e){}`
+  + `gtag('js',new Date());gtag('config','${GA_ID}');</script>`;
+// One-time GDPR consent banner (revealed by static.js only when no choice is stored).
+const CONSENT_BANNER = `<div class="consent" data-consent hidden role="dialog" aria-label="Cookie consent" aria-live="polite">`
+  + `<p class="consent-text">We use cookies and Google Analytics to see how visitors use this site. Analytics stays off until you accept.</p>`
+  + `<div class="consent-actions"><button type="button" class="consent-btn consent-decline" data-consent-decline>Decline</button>`
+  + `<button type="button" class="consent-btn consent-accept" data-consent-accept>Accept</button></div></div>`;
 const NOSCRIPT = `<noscript><div class="noscript-banner">This site works best with JavaScript on for search, save, and near me.</div></noscript>`;
 const HEAD_PWA = `<link rel="manifest" href="/manifest.json"><meta name="theme-color" content="#0e3b30"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Pawns">`;
 // Playfair Display — the Vault display serif: a high-contrast luxury face with
@@ -279,7 +291,7 @@ function page({ urlPath, title, desc, canonical, jsonld = [], body, index = true
     + `<meta property="og:url" content="${esc(url)}"><meta property="og:image" content="${OG_IMAGE}">`
     + `<meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="${esc(title)}"><meta name="twitter:description" content="${esc(desc)}"><meta name="twitter:image" content="${OG_IMAGE}">`
     + HEAD_PWA + HEAD_FONTS + `<link rel="stylesheet" href="/css/style.css?v=${V}">${ld}</head>`
-    + `<body class="static${bodyClass ? ' ' + bodyClass : ''}">${iconSprite()}${NOSCRIPT}${headerHTML({ subnav: !minimalChrome, search: !minimalChrome })}${body}${footerHTML()}${bottomTabsHTML(active)}${scripts}</body></html>`;
+    + `<body class="static${bodyClass ? ' ' + bodyClass : ''}">${iconSprite()}${NOSCRIPT}${headerHTML({ subnav: !minimalChrome, search: !minimalChrome })}${body}${footerHTML()}${bottomTabsHTML(active)}${CONSENT_BANNER}${scripts}</body></html>`;
 }
 
 // JSON-LD helpers
@@ -760,7 +772,7 @@ const readPkg = () => readFileSync(join(ROOT, 'package.json'), 'utf8');
 
 function write404() {
   const body = `<main class="static-wrap"><h1 class="static-h1">Page not found</h1><p class="static-sub">That page does not exist. Browse the directory instead.</p><p style="margin-top:18px"><a class="btn-pill" href="/directory/">Browse all Georgia pawn shops</a></p></main>`;
-  writeFileSync(join(ROOT, '404.html'), `<!doctype html><html lang="en"><head><meta charset="utf-8">${GTAG}<meta name="viewport" content="width=device-width, initial-scale=1"><title>Page not found | ${esc(SITE)}</title><meta name="robots" content="noindex">${HEAD_PWA}<link rel="stylesheet" href="/css/style.css?v=${V}"></head><body class="static">${iconSprite()}${NOSCRIPT}${headerHTML()}${body}${footerHTML()}${bottomTabsHTML()}<script type="module" src="/js/static.js?v=${V}"></script></body></html>`);
+  writeFileSync(join(ROOT, '404.html'), `<!doctype html><html lang="en"><head><meta charset="utf-8">${GTAG}<meta name="viewport" content="width=device-width, initial-scale=1"><title>Page not found | ${esc(SITE)}</title><meta name="robots" content="noindex">${HEAD_PWA}<link rel="stylesheet" href="/css/style.css?v=${V}"></head><body class="static">${iconSprite()}${NOSCRIPT}${headerHTML()}${body}${footerHTML()}${bottomTabsHTML()}${CONSENT_BANNER}<script type="module" src="/js/static.js?v=${V}"></script></body></html>`);
 }
 
 // build everything
