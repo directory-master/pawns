@@ -1,0 +1,50 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd /Users/gradikayamba/lawyers; echo \"=== top-level non-city dirs/files ===\" ; ls -la | grep -vE 'drwxr.*staff.* [a-z]' | head -60; echo; echo \"=== scripts ===\" ; ls -la scripts/ 2>/dev/null; echo \"=== js ===\" ; find js -type f 2>/dev/null | head -60; echo \"=== data ===\"; ls -la data/ 2>/dev/null; echo \"=== templates ===\"; ls -la templates/ 2>/dev/null)",
+      "Read(//Users/gradikayamba/lawyers/**)",
+      "Bash(python3 -)",
+      "Bash(awk 'NR>=725 && NR<=1083 {print length\"\\\\t\"NR}' template_stripped.html)",
+      "Bash(set -e)",
+      "Bash(mkdir -p js/lib js/components js/data scripts assets css data/cities)",
+      "Bash(cp /Users/gradikayamba/lawyers/js/lib/dom.js js/lib/)",
+      "Bash(cp /Users/gradikayamba/lawyers/js/lib/icons.js js/lib/)",
+      "Bash(cp /Users/gradikayamba/lawyers/js/lib/format.js js/lib/)",
+      "Bash(cd /Users/gradikayamba/pawns *)",
+      "Bash(node -e ' *)",
+      "Bash(awk '{print $5, $9}')",
+      "Bash(node -e 'const f=\"package.json\";const p=require\\(\"fs\"\\);const j=JSON.parse\\(p.readFileSync\\(f\\)\\);j.version=\"0.1.1\";p.writeFileSync\\(f,JSON.stringify\\(j,null,2\\)+\"\\\\n\"\\)')",
+      "Bash('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' --headless --disable-gpu --no-sandbox --hide-scrollbars --window-size=1400,1000 --screenshot=/tmp/pawns_home2.png --virtual-time-budget=4000 http://localhost:8000/)",
+      "Bash('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' --headless --disable-gpu --no-sandbox --hide-scrollbars --window-size=900,1400 --screenshot=/tmp/pawns_city2.png --virtual-time-budget=4000 http://localhost:8000/atlanta/)",
+      "Bash(awk '{print $5,$9}')",
+      "Bash('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' --headless --disable-gpu --no-sandbox --enable-logging=stderr --v=0 --virtual-time-budget=3500 --dump-dom http://localhost:8000/saved/)",
+      "Bash(curl -s \"http://localhost:8000/saved/\")",
+      "Bash(sed -i '' 's/content=\"#131921\"/content=\"#0f3d2e\"/g' scripts/generate-pages.mjs)",
+      "Bash(sed -i '' 's/\"#131921\"/\"#0f3d2e\"/g' manifest.json)",
+      "Bash(node -e 'const f=\"package.json\";const fs=require\\(\"fs\"\\);const j=JSON.parse\\(fs.readFileSync\\(f\\)\\);j.version=\"0.2.0\";fs.writeFileSync\\(f,JSON.stringify\\(j,null,2\\)+\"\\\\n\"\\)')",
+      "Bash(node -e 'import\\(\"./js/data/pawns-imported.js\"\\).then\\(m=>{const d=m.IMPORTED;console.log\\(\"listings:\",d.length\\);console.log\\(\"distinct cities:\",new Set\\(d.map\\(x=>x.city\\)\\).size\\);console.log\\(\"sample non-GA-ish cities:\",[...new Set\\(d.map\\(x=>x.cityName\\)\\)].slice\\(0,30\\).join\\(\", \"\\)\\)}\\)')",
+      "Bash(awk '{print $6,$7,$8,$9}')",
+      "Bash(node -e 'import\\(\"./js/data/pawns-imported.js\"\\).then\\(m=>{const d=m.IMPORTED;const t={},e={};for\\(const x of d\\){t[x.type]=\\(t[x.type]||0\\)+1;e[x.entity]=\\(e[x.entity]||0\\)+1}console.log\\(\"types:\",t\\);console.log\\(\"entity:\",e\\)}\\)')",
+      "Bash('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' --headless --disable-gpu --no-sandbox --hide-scrollbars --window-size=1400,1450 --screenshot=/tmp/pawns_green_home.png --virtual-time-budget=4000 http://localhost:8000/)",
+      "Bash('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' --headless --disable-gpu --no-sandbox --hide-scrollbars --window-size=900,1300 --screenshot=/tmp/pawns_green_city.png --virtual-time-budget=4000 http://localhost:8000/atlanta/)",
+      "Bash('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' --headless --disable-gpu --no-sandbox --hide-scrollbars --window-size=1400,560 --screenshot=/tmp/pawns_stats2.png --virtual-time-budget=7000 http://localhost:8000/)",
+      "Bash(ls -la vendor/leaflet/)",
+      "Bash(find js *)",
+      "Bash(grep -rln \"L.map\\\\|tileLayer\\\\|data-map\\\\|leaflet\" js)",
+      "Bash('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' --headless --disable-gpu --no-sandbox --hide-scrollbars --window-size=1100,1600 --screenshot=/tmp/pawns_map.png --virtual-time-budget=7000 http://localhost:8000/atlanta/)",
+      "Bash('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' --headless --disable-gpu --no-sandbox --window-size=1300,900 --screenshot=/tmp/d_bottom.png --virtual-time-budget=4000 http://localhost:8000/saved/)",
+      "Bash(node -)",
+      "Bash(grep -o '<span class=\"logo\">.\\\\{0,40\\\\}' index.html)",
+      "Bash('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' --headless --disable-gpu --hide-scrollbars --window-size=1440,900 --screenshot=/tmp/home_top.png http://localhost:8731/)",
+      "Bash('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' --headless --disable-gpu --hide-scrollbars --window-size=420,300 --screenshot=/tmp/hdr_m.png http://localhost:8731/)",
+      "Bash('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' --headless=new --disable-gpu --hide-scrollbars --window-size=420,300 --screenshot=/tmp/hdr_new.png http://localhost:8731/)",
+      "Bash(node -e \"const f='package.json',p=require\\('./'+f\\);p.version='0.8.2';require\\('fs'\\).writeFileSync\\(f,JSON.stringify\\(p,null,2\\)+'\\\\n'\\)\")",
+      "Bash('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' --headless=new --disable-gpu --hide-scrollbars --window-size=430,1750 --screenshot=/tmp/ny_m.png http://localhost:8731/)",
+      "Bash(sips --cropOffset 720 0 -c 620 430 ny_m.png --out ny_m_crop.png)",
+      "Bash(node scripts/import-csv.mjs ~/Downloads/Bing_Maps_Scraper_1790__20260615085329.csv)"
+    ],
+    "additionalDirectories": [
+      "/Users/gradikayamba/pawns"
+    ]
+  }
+}

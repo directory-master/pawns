@@ -1,0 +1,13 @@
+{
+  "name": "Georgia Pawn Shop Directory",
+  "short_name": "Pawns",
+  "description": "Find and compare pawn shops and valuables buyers across Georgia.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f3d2e",
+  "theme_color": "#0f3d2e",
+  "categories": ["business", "directories", "shopping"],
+  "icons": []
+}
