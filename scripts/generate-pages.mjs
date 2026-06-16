@@ -21,9 +21,13 @@ import { iconHTML, iconSprite } from '../js/lib/icons.js';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const V = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8')).version;
-const ORIGIN = 'https://paws.artivicolab.com';
+const ORIGIN = 'https://pawns.artivicolab.com';
 const SITE = 'Georgia Pawn Shop Directory';
 const ALT = 'Pawns';
+// BRAND is the site name we assert to Google (og:site_name + WebSite schema), so
+// search shows "Pawns Directory" instead of the bare subdomain or the parent
+// domain's "ArtivicoLab". SITE stays the descriptive name used in title text.
+const BRAND = 'Pawns Directory';
 const YEAR = new Date().getFullYear();
 const OG_IMAGE = `${ORIGIN}/bg-pawns.jpg`;
 const KIND = { shop: 'Pawn & Loan', buyer: 'Buyer' };
@@ -290,7 +294,7 @@ function page({ urlPath, title, desc, canonical, jsonld = [], body, index = true
     + `<title>${esc(title)}</title><meta name="description" content="${esc(desc)}">`
     + `<link rel="canonical" href="${esc(url)}">`
     + (index ? '' : '<meta name="robots" content="noindex, follow">')
-    + `<meta property="og:type" content="website"><meta property="og:site_name" content="${esc(SITE)}">`
+    + `<meta property="og:type" content="website"><meta property="og:site_name" content="${esc(BRAND)}">`
     + `<meta property="og:title" content="${esc(title)}"><meta property="og:description" content="${esc(desc)}">`
     + `<meta property="og:url" content="${esc(url)}"><meta property="og:image" content="${OG_IMAGE}">`
     + `<meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="${esc(title)}"><meta name="twitter:description" content="${esc(desc)}"><meta name="twitter:image" content="${OG_IMAGE}">`
@@ -600,8 +604,8 @@ function buildHome() {
     + `</div></div></section>`
     + `</main>`;
   const jsonld = [
-    { '@context': 'https://schema.org', '@type': 'WebSite', name: SITE, alternateName: ALT, url: ORIGIN + '/', potentialAction: { '@type': 'SearchAction', target: `${ORIGIN}/search/?q={query}`, 'query-input': 'required name=query' } },
-    { '@context': 'https://schema.org', '@type': 'Organization', name: SITE, alternateName: ALT, url: ORIGIN + '/', logo: OG_IMAGE },
+    { '@context': 'https://schema.org', '@type': 'WebSite', name: BRAND, alternateName: [ALT, SITE], url: ORIGIN + '/', potentialAction: { '@type': 'SearchAction', target: `${ORIGIN}/search/?q={query}`, 'query-input': 'required name=query' } },
+    { '@context': 'https://schema.org', '@type': 'Organization', name: BRAND, alternateName: SITE, url: ORIGIN + '/', logo: OG_IMAGE },
   ];
   emit('/', page({ urlPath: '/', title: `${SITE} | Pawn Shops, Title Pawns, Gold and Coin Buyers (${YEAR})`, desc: `Find and compare ${TOTAL} pawn shops, car title pawns, gun and firearm pawns, and gold, coin, and jewelry buyers across Georgia.`, jsonld, body, active: 'Home', priority: 1.0, bodyClass: 'home' }));
 }
