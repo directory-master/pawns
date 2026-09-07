@@ -44,8 +44,12 @@ function mergeRating(ratings, rec) {
 }
 
 const DOWNLOADS = `${process.env.HOME}/Downloads`;
-const SRCS = process.argv.slice(2).length
-  ? process.argv.slice(2)
+// `--no-csv` rebuilds js/data/pawns-imported.js from the durable store alone
+// (e.g. after scripts/fetch-images.mjs updated data/photos.json).
+const ARGS = process.argv.slice(2).filter(a => a !== '--no-csv');
+const NO_CSV = process.argv.includes('--no-csv');
+const SRCS = NO_CSV ? [] : ARGS.length
+  ? ARGS
   : (existsSync(DOWNLOADS) ? readdirSync(DOWNLOADS) : [])
       .filter(f => /^Bing_Maps_Scraper_.*\.csv$/i.test(f)).sort().map(f => join(DOWNLOADS, f));
 
@@ -164,6 +168,13 @@ for (const r of kept) {
 // guard id collisions → suffix
 const ids = new Set();
 for (const s of out) { let id = s.id, n = 2; while (ids.has(id)) id = `${s.id}-${n++}`; s.id = id; ids.add(id); }
+
+// Self-hosted photos (scripts/fetch-images.mjs → data/photos.json): point at the
+// local copy, or null when the source is known dead, so no card ever requests a
+// thumbnail that will fail. Unknown ids keep the remote URL until fetched.
+let PHOTOS = {};
+try { PHOTOS = JSON.parse(readFileSync(new URL('../data/photos.json', import.meta.url), 'utf8')); } catch { /* none yet */ }
+for (const s of out) { const p = PHOTOS[s.id]; if (p) s.image = p.file ? '/' + p.file : null; }
 
 out.sort((a, b) => a.cityName.localeCompare(b.cityName) || (b.rating ?? -1) - (a.rating ?? -1) || (b.reviews ?? -1) - (a.reviews ?? -1));
 

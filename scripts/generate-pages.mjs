@@ -50,6 +50,75 @@ const hoursClean = (h) => String(h || '').replace(/\s*·\s*/g, ', ').trim();
 const fmtReviews = (n) => n ? `${Number(n).toLocaleString()} review${n === 1 ? '' : 's'}` : '';
 const fmtMi = (mi) => (mi == null || !isFinite(mi)) ? '' : (mi < 10 ? `${mi.toFixed(1)} mi` : `${Math.round(mi)} mi`);
 const sitemap = [];
+// <title> budget (~60 chars): keep the " | Pawns" suffix only when it still fits.
+const SITE_SUFFIX = ` | ${ALT}`;
+const mkTitle = (core) => core.length + SITE_SUFFIX.length <= 60 ? core + SITE_SUFFIX : core;
+const lc1 = (t) => t.charAt(0).toLowerCase() + t.slice(1);
+const para = (...ps) => ps.filter(Boolean).map(t => `<p class="area-intro">${t}</p>`).join('');
+const joinList = (arr) => arr.length <= 1 ? arr.join('') : arr.slice(0, -1).join(', ') + ' and ' + arr[arr.length - 1];
+const nf = (n) => Number(n || 0).toLocaleString('en-US');
+// Meta description budget (~155 chars): cut at the last full sentence, else word.
+const clamp = (t, max = 158) => {
+  t = String(t || '').replace(/\s+/g, ' ').trim();
+  if (t.length <= max) return t;
+  const cut = t.slice(0, max);
+  const sent = Math.max(cut.lastIndexOf('. '), cut.lastIndexOf('? '), cut.lastIndexOf('! '));
+  if (sent >= max * 0.5) return cut.slice(0, sent + 1).trim();
+  const sp = cut.lastIndexOf(' ');
+  return (sp > 0 ? cut.slice(0, sp) : cut).trim() + '…';
+};
+// Cards rendered per page; the rest live on the narrower pages. Keeps every URL
+// light instead of a multi megabyte dump (the jewelry page was 2.25 MB).
+const CAP = { city: 60, cityArea: 60, county: 60, zip: 40, area: 50 };
+const MIN_INDEX = 3;
+
+// Georgia facts per category, shown as visible prose on the statewide pages and
+// echoed on city×category pages. Plain facts, no advice, no endorsement.
+const AREA_PROSE = {
+  'pawn-shops': (n) => para(
+    `Georgia pawn shops are regulated under the state pawnbroker law (O.C.G.A. § 44-12-130 and following). A pawn is a loan against an item you leave with the shop: the pawn ticket must state the amount, the charges, the maturity date and the grace period, and you get the item back when you repay. If you do not, the shop keeps it; there is no further debt and no effect on your credit.`,
+    `Georgia caps pawn charges at 25 percent of the principal per 30 day period for the first 90 days and 12.5 percent per 30 days after that, which is why the same item can cost very different amounts at different shops. Every shop must record your ID and report transactions to local police, so stolen goods are traceable.`,
+    `${nf(n)} pawn shops across Georgia are listed here, ranked by rating and review count from public sources. Compare a few before you pawn or sell; most will quote over the phone.`),
+  'car-title-pawn': (n) => para(
+    `A Georgia title pawn is a 30 day loan secured by your vehicle's title. You keep driving the car, the lender keeps the title, and the same pawn law applies: charges are capped at 25 percent a month for the first three months and 12.5 percent a month after that. Because the loan renews every 30 days, the cost adds up fast if it is not paid down.`,
+    `If you default, the lender can repossess the car, and in Georgia it does not have to return any surplus after selling it. Ask for the total repayment amount in writing, whether partial payments reduce the principal, and how repossession is handled before you sign.`,
+    `${nf(n)} title pawn locations are listed here, ranked by rating and reviews.`),
+  'gun-firearm-pawn': (n) => para(
+    `Pawn shops that take firearms must hold a federal firearms license, and redeeming or buying a gun from one means a NICS background check and an ATF Form 4473, the same as a gun store. Georgia has no waiting period and no state permit requirement for the purchase itself.`,
+    `Because the shop is licensed, a pawned gun is logged in its bound book and traced if it turns out to be stolen. Bring the firearm unloaded and cased, and expect the shop to check the serial number before quoting.`,
+    `${nf(n)} gun and pawn shops are listed here, ranked by rating and reviews.`),
+  'gold-coin-buyers': (n) => para(
+    `Gold buyers pay by weight and purity: the karat stamp (10K is 41.7 percent gold, 14K 58.5 percent, 18K 75 percent) times the day's spot price, minus the buyer's margin. Coin dealers price bullion the same way and price collectible coins on condition and rarity. Prices can differ by 20 percent or more between shops on the same day, so get two or three quotes.`,
+    `Georgia's precious metals law requires registered dealers to check your ID, record each purchase and hold items before reselling them, so a legitimate buyer will ask for identification. A certified scale in view and a quote in grams or pennyweight at a stated purity are the signs of a straightforward dealer.`,
+    `${nf(n)} gold, silver and coin buyers are listed here, ranked by rating and reviews.`),
+  'jewelry-watch-consignment': (n) => para(
+    `Jewelry and watch buyers work three ways: an outright offer, a consignment where the shop sells the piece and splits the proceeds, or a pawn loan against it. Outright offers are lowest and fastest; consignment usually brings the most but can take months. Luxury watches with box and papers, and diamonds with a GIA report, get materially better offers.`,
+    `Ask whether the quote is based on melt value or resale value; designer pieces and signed watches should be priced on resale. Independent appraisals are worth it above a few thousand dollars.`,
+    `${nf(n)} jewelry buyers, diamond buyers and consignment shops are listed here, ranked by rating and reviews.`),
+  'estate-antique-buyers': (n) => para(
+    `Estate buyers purchase whole households or collections, often on site; antique dealers buy selectively; auction houses sell on commission. Georgia auctioneers must be licensed by the Georgia Auctioneers Commission. For a full estate, a buyout is fastest, an estate sale company keeps more value but charges 30 to 40 percent, and an auction suits collectibles with a real market.`,
+    `Get any buyout offer itemized for the higher value pieces, and ask how the dealer prices silver, jewelry and coins, which are usually the bulk of the value.`,
+    `${nf(n)} estate buyers, antique dealers and auction houses are listed here, ranked by rating and reviews.`),
+};
+const AREA_FAQ = (a, n, tp) => [
+  { q: `How many ${a.name.toLowerCase()} businesses are in Georgia?`, a: `${nf(n)} are listed here, ranked by rating and review volume from public sources.` },
+  tp && tp.rating ? { q: `Which ${a.name.toLowerCase()} is top rated in Georgia?`, a: `${tp.name} in ${tp.cityName} is among the highest rated, with ${tp.rating.toFixed(1)} stars${tp.reviews ? ` across ${nf(tp.reviews)} reviews` : ''}.` } : null,
+  { q: `Is this directory a lender or an appraiser?`, a: `No. It is a directory of public listings. We do not lend, appraise, vet or endorse any business; a claimed listing is owner claimed only.` },
+].filter(Boolean);
+function cityProse(c, listings) {
+  const types = {};
+  for (const l of listings) types[l.type] = (types[l.type] || 0) + 1;
+  const mix = Object.entries(types).sort((x, y) => y[1] - x[1]).slice(0, 4).map(([t, k]) => `${t.toLowerCase()}${k > 1 ? 's' : ''} (${k})`);
+  const g = groupByEntity(listings);
+  const tp = top(listings, 1)[0];
+  const avgArr = listings.filter(l => l.rating);
+  const avg = avgArr.length ? avgArr.reduce((s, l) => s + l.rating, 0) / avgArr.length : null;
+  return para(
+    `${c.name} is in ${c.county ? `${c.county} County, ` : ''}Georgia. Pawn shops here operate under the state pawnbroker law, which caps charges at 25 percent a month for the first 90 days, requires a written pawn ticket with a maturity date and grace period, and makes every shop record your ID and report transactions to local police.`,
+    `We list ${nf(listings.length)} ${listings.length === 1 ? 'business' : 'businesses'} in ${c.name}: ${nf(g.shop.length)} pawn and loan ${g.shop.length === 1 ? 'shop' : 'shops'} and ${nf(g.buyer.length)} ${g.buyer.length === 1 ? 'buyer' : 'buyers'}${mix.length ? `, mostly ${joinList(mix)}` : ''}.${avg ? ` Together they average ${avg.toFixed(1)} stars from public reviews.` : ''}${tp && tp.rating ? ` ${tp.name} currently holds the top spot with ${tp.rating.toFixed(1)} stars${tp.reviews ? ` across ${nf(tp.reviews)} reviews` : ''}.` : ''}`,
+    `Rankings come from published ratings and review counts, not from us. Call ahead for a quote, and use the category chips to narrow to title pawns, gold buyers or jewelry buyers.`);
+}
+const faqHTML = (faq) => faq.length ? `<div class="faq">${faq.map(f => `<div class="faq-item"><h3 class="faq-q">${esc(f.q)}</h3><p class="faq-a">${esc(f.a)}</p></div>`).join('')}</div>` : '';
 
 // ─── the card (mirrors js/components/card.js) ────────────────────────────────
 // `compact` renders the short tile used in horizontal rails: poster + name +
@@ -239,10 +308,10 @@ function crumbsHTML(items) {
 function segmentedHTML(list) {
   const g = groupByEntity(list);
   if (!g.shop.length || !g.buyer.length) return '';
-  return `<div class="section-head"><div class="segmented" role="tablist">`
-    + `<button class="segment is-active" data-filter="all" role="tab" aria-selected="true">All</button>`
-    + `<button class="segment" data-filter="shop" role="tab" aria-selected="false">Shops</button>`
-    + `<button class="segment" data-filter="buyer" role="tab" aria-selected="false">Buyers</button>`
+  return `<div class="section-head"><div class="segmented" role="group" aria-label="Show all, shops, or buyers">`
+    + `<button class="segment is-active" data-filter="all" aria-pressed="true">All</button>`
+    + `<button class="segment" data-filter="shop" aria-pressed="false">Shops</button>`
+    + `<button class="segment" data-filter="buyer" aria-pressed="false">Buyers</button>`
     + `</div></div>`;
 }
 
@@ -281,6 +350,7 @@ const HEAD_FONTS = `<link rel="preconnect" href="https://fonts.gstatic.com" cros
 // ─── full document ───────────────────────────────────────────────────────────
 function page({ urlPath, title, desc, canonical, jsonld = [], body, index = true, active = 'Home', priority = 0.5, includeStatic = true, mapPage = false, bodyClass = '' }) {
   const url = canonical || (ORIGIN + urlPath);
+  desc = clamp(desc);
   // home + listing pages carry the minimal Vault chrome (no header search/subnav;
   // search + category chips live in the hero instead).
   const minimalChrome = String(bodyClass).split(/\s+/).some(c => c === 'home' || c === 'listing');
@@ -318,10 +388,11 @@ const breadcrumbLD = (items) => ({ '@context': 'https://schema.org', '@type': 'B
 const itemListLD = (list) => ({ '@context': 'https://schema.org', '@type': 'ItemList', itemListElement: list.map((l, i) => ({ '@type': 'ListItem', position: i + 1, item: listingLD(l) })) });
 
 // ─── listing page (city / county / zip / area) ───────────────────────────────
-function listingPage({ urlPath, title, desc, eyebrow, h1, sub, intro, crumbs, listings, index = true, priority = 0.6, active = 'Browse', extraSections = '', nearby = null, activeArea = null }) {
+function listingPage({ urlPath, title, desc, eyebrow, h1, sub, intro, crumbs, listings, index = true, priority = 0.6, active = 'Browse', extraSections = '', nearby = null, activeArea = null, cap = null, capNote = '', about = null, faq = [] }) {
   const ranked = top(listings, 999);
-  const topList = ranked.slice(0, 10);
-  const rest = ranked.slice(10);
+  const shown = cap ? ranked.slice(0, cap) : ranked;
+  const topList = shown.slice(0, 10);
+  const rest = shown.slice(10);
   // map: listings with coordinates, plus a center (their centroid) for the page
   const geo = listings.filter(l => l.lat != null && l.lng != null);
   const center = geo.length
@@ -359,7 +430,6 @@ function listingPage({ urlPath, title, desc, eyebrow, h1, sub, intro, crumbs, li
   const body = vHeroHTML({ eyebrow, title: esc(h1), sub, stats: heroStats, crumbs, pageClass: 'vhero--page' })
     + vchipsHTML(activeArea)
     + `<main>`
-    + (intro ? `<p class="area-intro visually-hidden">${esc(intro)}</p>` : '')
     + featuredHTML(listings)
     + mapSection
     + `<section class="section"><div class="shell">`
@@ -367,8 +437,11 @@ function listingPage({ urlPath, title, desc, eyebrow, h1, sub, intro, crumbs, li
     + `<div class="vcard-grid" data-more-list>`
     + topList.map((l) => vaultCardHTML(l)).join('')
     + rest.map((l) => vaultCardHTML(l)).join('')
-    + `</div><button class="more-btn" data-more-btn>Show more</button></div></section>`
+    + `</div><button class="more-btn" data-more-btn>Show more</button>`
+    + (cap && ranked.length > cap ? `<p class="area-intro cap-note">Showing the top ${nf(cap)} of ${nf(ranked.length)}. ${capNote || 'Use the category chips or a city page for the rest.'}</p>` : '')
+    + `</div></section>`
     + nearbySection
+    + (about && about.html ? `<section class="section page-about"><div class="shell"><div class="section-head"><h2>${esc(about.title)}</h2></div>${about.html}${faqHTML(faq)}</div></section>` : '')
     + extraSections
     + cityGridSection()
     + `</main>`;
@@ -382,11 +455,18 @@ function listingPage({ urlPath, title, desc, eyebrow, h1, sub, intro, crumbs, li
 
 // ─── writers ─────────────────────────────────────────────────────────────────
 const written = new Set();
+const CHANGED = new Set();   // canonical URLs whose HTML changed this build (drives <lastmod>)
+const PREV_LASTMOD = new Map();
+try {
+  for (const m of readFileSync(join(ROOT, 'sitemap.xml'), 'utf8').matchAll(/<loc>([^<]+)<\/loc><lastmod>([^<]+)<\/lastmod>/g)) PREV_LASTMOD.set(m[1], m[2]);
+} catch { /* first build with lastmod */ }
 function emit(urlPath, html) {
   const rel = urlPath === '/' ? 'index.html' : join(urlPath.replace(/^\/|\/$/g, ''), 'index.html');
   const full = join(ROOT, rel);
   mkdirSync(join(full, '..'), { recursive: true });
-  writeFileSync(full, html);
+  let prev = null;
+  try { prev = readFileSync(full, 'utf8'); } catch { /* new */ }
+  if (prev !== html) { writeFileSync(full, html); CHANGED.add(ORIGIN + urlPath); }
   written.add(urlPath === '/' ? '' : urlPath.replace(/^\/|\/$/g, ''));
 }
 
@@ -607,7 +687,7 @@ function buildHome() {
     { '@context': 'https://schema.org', '@type': 'WebSite', name: BRAND, alternateName: [ALT, SITE], url: ORIGIN + '/', potentialAction: { '@type': 'SearchAction', target: `${ORIGIN}/search/?q={query}`, 'query-input': 'required name=query' } },
     { '@context': 'https://schema.org', '@type': 'Organization', name: BRAND, alternateName: SITE, url: ORIGIN + '/', logo: OG_IMAGE },
   ];
-  emit('/', page({ urlPath: '/', title: `${SITE} | Pawn Shops, Title Pawns, Gold and Coin Buyers (${YEAR})`, desc: `Find and compare ${TOTAL} pawn shops, car title pawns, gun and firearm pawns, and gold, coin, and jewelry buyers across Georgia.`, jsonld, body, active: 'Home', priority: 1.0, bodyClass: 'home' }));
+  emit('/', page({ urlPath: '/', title: `Georgia Pawn Shops | Find Pawn Shops and Gold Buyers (${YEAR})`, desc: `Find and compare ${nf(TOTAL)} pawn shops, title pawns, gun pawns and gold, coin and jewelry buyers across Georgia by city and rating. See who pays fair before you sell.`, jsonld, body, active: 'Home', priority: 1.0, bodyClass: 'home' }));
 }
 
 // DIRECTORY HUB
@@ -626,7 +706,7 @@ function buildDirectory() {
     + azSection('Counties', COUNTIES.map(c => ({ ...c, name: c.name + ' County' })), x => `/county/${x.slug}/`)
     + azSection('Zip codes', ZIPS, x => `/zip/${x.slug}/`)
     + `</main>`;
-  emit('/directory/', page({ urlPath: '/directory/', title: `Browse the ${SITE} | Cities, Counties, Categories`, desc: `Browse every Georgia pawn shop and valuables buyer by city, county, category, and zip code.`, body, active: 'Browse', priority: 0.8, bodyClass: 'listing',
+  emit('/directory/', page({ urlPath: '/directory/', title: `Browse Georgia Pawn Shops by City, County and Category | ${ALT}`, desc: `Browse every Georgia pawn shop and valuables buyer by city, county, category, and zip code.`, body, active: 'Browse', priority: 0.8, bodyClass: 'listing',
     jsonld: [breadcrumbLD([{ name: 'Home', href: '/' }, { name: 'Directory', href: '/directory/' }])] }));
 }
 
@@ -636,10 +716,17 @@ function buildCities() {
     const listings = inCity(c.slug);
     const county = c.county ? `${c.county} County` : 'Georgia';
     const extra = c.countySlug ? `<section class="section"><div class="shell"><div class="section-head"><h2>Nearby</h2></div><div class="chips chips--wrap"><a class="chip" href="/county/${esc(c.countySlug)}/">All of ${esc(c.county)} County</a></div></div></section>` : '';
+    const types = [...new Set(listings.map(l => l.type))].slice(0, 3).map(t => t.toLowerCase());
     listingPage({
       urlPath: `/${c.slug}/`,
-      title: `Top Pawn Shops in ${c.name}, GA (${YEAR}) | ${ALT}`,
-      desc: `Find and compare ${listings.length} pawn shops and valuables buyers in ${c.name}, Georgia. Ratings, hours, phone, and directions.`,
+      title: mkTitle(`Pawn Shops in ${c.name}, GA | Title Pawn and Gold Buyers (${YEAR})`),
+      desc: `Compare ${nf(listings.length)} pawn shops and buyers in ${c.name}, GA by rating and reviews.${types.length ? ` ${types.map((t, i) => i ? t : t.charAt(0).toUpperCase() + t.slice(1)).join(', ')} and more.` : ''} Call or get directions from the listing.`,
+      cap: CAP.city, capNote: 'Pick a category chip above for the full ranked list of that kind.',
+      about: { title: `About pawn shops in ${c.name}`, html: cityProse(c, listings) },
+      faq: [
+        { q: `How many pawn shops are in ${c.name}, GA?`, a: `${nf(listings.length)} pawn shops and valuables buyers in ${c.name}${c.county ? `, ${c.county} County,` : ''} are listed here, ranked by rating and reviews.` },
+        { q: `How much can a pawn shop in ${c.name} charge?`, a: `Georgia law caps pawn charges at 25 percent of the loan per 30 days for the first 90 days and 12.5 percent per 30 days after that. The pawn ticket must show the maturity date and grace period.` },
+      ],
       eyebrow: `${county}`, h1: `Pawn shops in ${c.name}, GA`,
       sub: `Compare ${listings.length} pawn shops, title pawns, and gold and jewelry buyers in ${c.name}.`,
       intro: `${c.name} has ${listings.length} pawn and valuables business${listings.length === 1 ? '' : 'es'} in our directory, from full service pawn shops to car title pawns and gold, coin, and jewelry buyers. Each listing below shows ratings, hours, and a direct line to call or get directions.`,
@@ -657,8 +744,12 @@ function buildCounties() {
     const extra = azSection(`Cities in ${c.name} County`, cities.map(name => ({ name, slug: kebab(name) })), x => `/${x.slug}/`);
     listingPage({
       urlPath: `/county/${c.slug}/`,
-      title: `Pawn Shops in ${c.name} County, GA (${YEAR}) | ${ALT}`,
-      desc: `Find and compare ${listings.length} pawn shops and valuables buyers across ${c.name} County, Georgia.`,
+      title: mkTitle(`Pawn Shops in ${c.name} County, GA | Top Rated (${YEAR})`),
+      desc: `Compare ${nf(listings.length)} pawn shops and buyers across ${c.name} County, GA by city, rating and reviews. ${cities.slice(0, 3).join(', ')} and more.`,
+      cap: CAP.county, capNote: 'Open a city below for its full ranked list.',
+      about: { title: `About pawn shops in ${c.name} County`, html: para(
+        `${c.name} County has ${nf(listings.length)} pawn shops and valuables buyers across ${joinList(cities.slice(0, 6))}${cities.length > 6 ? ` and ${nf(cities.length - 6)} more ${cities.length - 6 === 1 ? 'city' : 'cities'}` : ''}. All operate under Georgia's pawnbroker law: charges capped at 25 percent a month for the first 90 days, a written pawn ticket, and ID recorded on every transaction.`,
+        `Rankings come from published ratings and review counts. Pick a city for the shops closest to you, or a category chip for title pawns, gold buyers or jewelry buyers.`) },
       eyebrow: 'Georgia county', h1: `Pawn shops in ${c.name} County, GA`,
       sub: `${listings.length} pawn shops and buyers across ${cities.length} ${c.name} County ${cities.length === 1 ? 'city' : 'cities'}.`,
       intro: `${c.name} County has ${listings.length} pawn and valuables business${listings.length === 1 ? '' : 'es'} across ${cities.length} ${cities.length === 1 ? 'city' : 'cities'}. Browse the top rated below or jump straight to a city.`,
@@ -675,8 +766,9 @@ function buildZips() {
     const indexable = listings.length >= 3;
     listingPage({
       urlPath: `/zip/${z.slug}/`,
-      title: `Pawn Shops in ${z.slug}, ${z.city} GA (${YEAR}) | ${ALT}`,
-      desc: `Pawn shops and valuables buyers in the ${z.slug} zip code, ${z.city}, Georgia.`,
+      title: mkTitle(`Pawn Shops in ${z.slug}, ${z.city}, GA | Pawn and Gold Buyers`),
+      desc: `Compare ${nf(listings.length)} pawn shops and buyers in ZIP code ${z.slug}, ${z.city}, GA, ranked by rating and reviews. See all ${z.city} pawn shops for more nearby.`,
+      cap: CAP.zip, capNote: `See all ${z.city} pawn shops for the full list.`,
       eyebrow: `${z.city}, GA`, h1: `Pawn shops in ${z.slug}`,
       sub: `${listings.length} listing${listings.length === 1 ? '' : 's'} in the ${z.slug} zip code.`,
       intro: `Pawn shops and valuables buyers in the ${z.slug} zip code around ${z.city}, Georgia.`,
@@ -692,10 +784,14 @@ function buildAreas() {
     const listings = inArea(a.slug);
     const cities = [...new Set(listings.map(l => l.cityName))].sort();
     const extra = azSection(`${a.name} by city`, cities.map(name => ({ name, slug: kebab(name) })), x => `/${x.slug}/`);
+    const tpA = top(listings, 1)[0];
     listingPage({
       urlPath: `/area/${a.slug}/`,
-      title: `Top ${a.name}s in Georgia (${YEAR}) | ${ALT}`,
-      desc: `Find and compare ${listings.length} ${a.name.toLowerCase()} businesses across Georgia. Ratings, hours, phone, and directions.`,
+      title: mkTitle(`Georgia ${a.name}s | Top Rated Locations (${YEAR})`),
+      desc: `Compare ${nf(listings.length)} ${a.name.toLowerCase()} locations across Georgia by city, rating and reviews. ${cities.slice(0, 3).join(', ')} and ${nf(Math.max(0, cities.length - 3))} more cities.`,
+      cap: CAP.area, capNote: 'Pick a city below for every location near you.',
+      about: { title: `${a.name} in Georgia, in brief`, html: AREA_PROSE[a.slug] ? AREA_PROSE[a.slug](listings.length) : '' },
+      faq: AREA_FAQ(a, listings.length, tpA),
       eyebrow: 'Category', h1: `${a.name}s in Georgia`,
       sub: `Compare ${listings.length} ${a.name.toLowerCase()} businesses across ${cities.length} Georgia cities.`,
       intro: `Georgia has ${listings.length} ${a.name.toLowerCase()} business${listings.length === 1 ? '' : 'es'} in our directory. Browse the top rated statewide, then narrow to your city.`,
@@ -706,10 +802,13 @@ function buildAreas() {
     for (const c of CITIES) {
       const combo = listings.filter(l => l.city === c.slug);
       if (combo.length < 3) continue;
+      const tpC = top(combo, 1)[0];
       listingPage({
         urlPath: `/${c.slug}/${a.slug}/`,
-        title: `${a.name}s in ${c.name}, GA (${YEAR}) | ${ALT}`,
-        desc: `Compare ${combo.length} ${a.name.toLowerCase()} businesses in ${c.name}, Georgia.`,
+        title: mkTitle(`${c.name}, GA ${a.name}s | Top Rated (${YEAR})`),
+        desc: `Compare ${nf(combo.length)} ${a.name.toLowerCase()} locations in ${c.name}, GA by rating and reviews.${tpC && tpC.rating ? ` ${tpC.name} leads with ${tpC.rating.toFixed(1)} stars.` : ''} Call or get directions from the listing.`,
+        cap: CAP.cityArea, capNote: `See all ${c.name} pawn shops or the statewide ${a.name.toLowerCase()} list for the rest.`,
+        about: { title: `${a.name} in ${c.name}, in brief`, html: (AREA_PROSE[a.slug] ? AREA_PROSE[a.slug](combo.length) : '') + para(`These ${nf(combo.length)} ${c.name} ${a.name.toLowerCase()} locations are ranked by published ratings and review counts.${tpC && tpC.rating ? ` ${tpC.name} currently ranks first with ${tpC.rating.toFixed(1)} stars${tpC.reviews ? ` from ${nf(tpC.reviews)} reviews` : ''}.` : ''}`) },
         eyebrow: `${c.name}, GA`, h1: `${a.name}s in ${c.name}, GA`,
         sub: `${combo.length} ${a.name.toLowerCase()} businesses in ${c.name}.`,
         intro: `${c.name} has ${combo.length} ${a.name.toLowerCase()} business${combo.length === 1 ? '' : 'es'} in our directory.`,
@@ -767,7 +866,9 @@ function writeCityCentroids() {
 }
 
 function writeSitemap() {
-  const urls = sitemap.filter(Boolean).map(s => `<url><loc>${esc(s.url)}</loc><priority>${s.priority.toFixed(1)}</priority></url>`).join('');
+  const today = new Date().toISOString().slice(0, 10);
+  // lastmod moves only when the page's HTML actually changed, so Google can trust it.
+  const urls = sitemap.filter(Boolean).map(s => `<url><loc>${esc(s.url)}</loc><lastmod>${CHANGED.has(s.url) ? today : (PREV_LASTMOD.get(s.url) || today)}</lastmod><priority>${s.priority.toFixed(1)}</priority></url>`).join('\n  ');
   writeFileSync(join(ROOT, 'sitemap.xml'),
     `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls}</urlset>\n`);
 }

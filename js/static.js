@@ -4,14 +4,14 @@
 // card into the detail sheet. The pages work without it; this just makes them
 // interactive. Operates on existing DOM — no re-rendering of static content.
 
-import { h } from './lib/dom.js?v=0.9.11';
-import { icon } from './lib/icons.js?v=0.9.11';
-import { savedIds, savedCount, isSaved, toggleSave } from './lib/saved.js?v=0.9.11';
-import { byId, distanceMi, nearest } from './lib/store.js?v=0.9.11';
-import { openClaim, openDetail, renderCard } from './components/card.js?v=0.9.11';
-import { puffFrom } from './lib/confetti.js?v=0.9.11';
-import { CENTROIDS } from './data/city-centroids.js?v=0.9.11';
-import { track } from './lib/analytics.js?v=0.9.11';
+import { h } from './lib/dom.js?v=0.10.0';
+import { icon } from './lib/icons.js?v=0.10.0';
+import { savedIds, savedCount, isSaved, toggleSave } from './lib/saved.js?v=0.10.0';
+import { byId, distanceMi, nearest } from './lib/store.js?v=0.10.0';
+import { openClaim, openDetail, renderCard } from './components/card.js?v=0.10.0';
+import { puffFrom } from './lib/confetti.js?v=0.10.0';
+import { CENTROIDS } from './data/city-centroids.js?v=0.10.0';
+import { track } from './lib/analytics.js?v=0.10.0';
 
 const CLAIM_TO = 'artivicolab@gmail.com';
 const haptic = (s) => { try { navigator.vibrate?.(s ? [12, 28, 22] : 18); } catch { /* */ } };
@@ -404,7 +404,7 @@ const STEP = 20;
       moreBtn.style.display = left > 0 ? '' : 'none';
       moreBtn.textContent = `Show ${Math.min(STEP, left)} more`;
     }
-    segments.forEach((s) => { const on = s.dataset.filter === filter; s.classList.toggle('is-active', on); s.setAttribute('aria-selected', String(on)); });
+    segments.forEach((s) => { const on = s.dataset.filter === filter; s.classList.toggle('is-active', on); s.setAttribute('aria-pressed', String(on)); });
   };
   segments.forEach((s) => s.addEventListener('click', () => { filter = s.dataset.filter; shown = STEP; apply(); }));
   moreBtn?.addEventListener('click', () => { shown += STEP; apply(); });

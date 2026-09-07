@@ -792,3 +792,12 @@ body.home .shell, body.listing .shell { width: min(100%, var(--content)); margin
 .az-group[open] .az-summary::after { content: '\2212'; }
 .az-group[open] .az-summary { border-bottom: 1px solid var(--line); }
 .az-group .chips { padding: 13px 15px; }
+
+/* ── Reader facing "About" prose + FAQ on listing pages (below the cards) ── */
+.page-about .area-intro { margin: 0 0 10px; }
+.page-about .cap-note { margin-top: 12px; }
+.cap-note { color: var(--muted); font-size: 14px; }
+.faq { margin-top: 18px; border-top: 1px solid var(--line); }
+.faq-item { padding: 13px 0; border-bottom: 1px solid var(--line); }
+.faq-q { margin: 0 0 5px; font-size: 16px; font-weight: 700; color: var(--ink); }
+.faq-a { margin: 0; font-size: 14.5px; line-height: 1.55; color: var(--muted); max-width: 820px; }
